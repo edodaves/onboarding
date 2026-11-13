@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edo Daves — Client Intake</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0A0A0A;
+    --bg-2: #141414;
+    --panel: #171717;
+    --panel-hi: #202020;
+    --line: rgba(255, 255, 255, 0.13);
+    --line-hi: rgba(255, 255, 255, 0.30);
+    --ink: #F4F4F4;
+    --muted: #9A9A9A;
+    --sage: #CFCFCF;
+    --green: #FFFFFF;
+    --green-deep: #3A3A3A;
+    --glow: rgba(255, 255, 255, 0.16);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Hanken Grotesk', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background:
+      radial-gradient(120% 80% at 78% -10%, rgba(255,255,255,0.05), transparent 55%),
+      radial-gradient(90% 70% at 12% 110%, rgba(255,255,255,0.04), transparent 60%),
+      var(--bg);
+  }
+
+  .stage {
+    position: relative;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 520px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 264px 1fr;
+    overflow: hidden;
+  }
+
+  /* ===== ASCENT RAIL ===== */
+  .rail {
+    position: relative;
+    padding: 40px 34px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(26,26,26,0.6), rgba(18,18,18,0.2));
+  }
+
+  .mark {
+    font-family: 'Newsreader', serif;
+    font-size: 20px;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .mark .dot { color: var(--green); }
+  .mark-sub {
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 48px;
+  }
+
+  .ascent {
+    position: relative;
+    flex: 1;
+    padding-left: 6px;
+  }
+  .ascent-track {
+    position: absolute;
+    left: 11px;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    background: var(--line);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .ascent-fill {
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 0%;
+    background: linear-gradient(180deg, var(--green), var(--green-deep));
+    transition: height 0.7s cubic-bezier(.65,0,.35,1);
+    box-shadow: 0 0 14px var(--glow);
+  }
+  .node {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    height: calc((100% - 0px) / 6);
+    min-height: 40px;
+  }
+  .node .bead {
+    position: relative;
+    z-index: 2;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--line-hi);
+    flex-shrink: 0;
+    transition: all 0.4s ease;
+  }
+  .node .lbl {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.01em;
+    transition: color 0.4s ease;
+  }
+  .node .lbl b {
+    display: block;
+    font-weight: 500;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: rgba(154,154,154,0.6);
+    margin-bottom: 2px;
+  }
+  .node.done .bead { background: var(--green); border-color: var(--green); }
+  .node.done .lbl { color: var(--sage); }
+  .node.current .bead {
+    background: var(--green);
+    border-color: var(--green);
+    box-shadow: 0 0 0 4px var(--glow), 0 0 16px var(--glow);
+    animation: pulse 2.6s ease-in-out infinite;
+  }
+  .node.current .lbl { color: var(--ink); }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 4px var(--glow), 0 0 14px var(--glow); }
+    50%     { box-shadow: 0 0 0 7px rgba(255,255,255,0.05), 0 0 22px var(--glow); }
+  }
+
+  /* ===== MAIN ===== */
+  .main {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .topbar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 26px 44px 0;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    min-height: 34px;
+  }
+
+  .canvas {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 24px clamp(32px, 7vw, 108px);
+    min-height: 0;
+  }
+
+  .screen { width: 100%; max-width: 720px; }
+  .fade {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: rise 0.55s cubic-bezier(.2,.7,.3,1) forwards;
+  }
+  @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 20px;
+  }
+  .eyebrow .n { color: var(--muted); }
+  .eyebrow::before {
+    content: "";
+    width: 22px; height: 1px;
+    background: var(--green);
+    opacity: 0.6;
+  }
+
+  .q {
+    font-family: 'Newsreader', serif;
+    font-weight: 400;
+    font-size: clamp(24px, 3.3vw, 39px);
+    line-height: 1.26;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  .q em { font-style: italic; color: var(--sage); }
+  .subq {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.55;
+    margin: 0 0 30px;
+    max-width: 560px;
+  }
+  .q + .field, .q + .options, .q + .scale { margin-top: 30px; }
+
+  /* text inputs */
+  input[type="text"], input[type="email"], textarea {
+    width: 100%;
+    max-width: 620px;
+    box-sizing: border-box;
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--line-hi);
+    font-family: 'Newsreader', serif;
+    font-size: clamp(19px, 2.1vw, 24px);
+    color: var(--ink);
+    padding: 6px 2px 14px;
+    outline: none;
+    transition: border-color 0.35s ease;
+    resize: none;
+  }
+  input::placeholder, textarea::placeholder {
+    color: rgba(154,154,154,0.55);
+    font-style: italic;
+  }
+  input:focus, textarea:focus { border-color: var(--green); }
+  textarea { min-height: 74px; line-height: 1.45; }
+
+  /* choice options */
+  .options { display: flex; flex-direction: column; gap: 11px; max-width: 620px; }
+  .opt {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 18px;
+    border: 1px solid var(--line-hi);
+    border-radius: 13px;
+    background: rgba(32,32,32,0.5);
+    cursor: pointer;
+    transition: border-color 0.22s ease, background 0.22s ease, transform 0.12s ease;
+    user-select: none;
+  }
+  .opt:hover { border-color: var(--green); background: var(--panel-hi); }
+  .opt:active { transform: scale(0.994); }
+  .opt .key {
+    width: 26px; height: 26px;
+    flex-shrink: 0;
+    border: 1px solid var(--line-hi);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all 0.22s ease;
+  }
+  .opt .txt { font-size: 16px; color: var(--ink); line-height: 1.35; }
+  .opt.sel { border-color: var(--green); background: rgba(255,255,255,0.10); }
+  .opt.sel .key { background: var(--green); color: var(--bg); border-color: var(--green); }
+
+  /* scale 1-10 */
+  .scale { display: flex; flex-wrap: wrap; gap: 9px; max-width: 620px; }
+  .scale .s {
+    width: 50px; height: 50px;
+    border: 1px solid var(--line-hi);
+    border-radius: 11px;
+    background: rgba(32,32,32,0.5);
+    color: var(--ink);
+    font-size: 16px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .scale .s:hover { border-color: var(--green); background: var(--panel-hi); }
+  .scale .s.sel { background: var(--green); color: var(--bg); border-color: var(--green); box-shadow: 0 0 16px var(--glow); }
+  .scale-ends {
+    display: flex; justify-content: space-between;
+    max-width: 620px; margin-top: 12px;
+    font-size: 12px; color: var(--muted); letter-spacing: 0.02em;
+  }
+
+  .hint {
+    margin-top: 22px;
+    font-size: 12.5px;
+    color: var(--muted);
+    display: flex; align-items: center; gap: 9px;
+    min-height: 18px;
+    letter-spacing: 0.01em;
+  }
+  .hint .kbd {
+    border: 1px solid var(--line-hi);
+    border-radius: 5px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .hint.err { color: #E0917F; }
+
+  /* nav */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px clamp(32px, 7vw, 108px) 30px;
+  }
+  .btn {
+    font-family: 'Hanken Grotesk', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    border-radius: 999px;
+    padding: 13px 30px;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.14s ease, background 0.24s ease, opacity 0.2s ease, box-shadow 0.24s ease;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--green);
+    color: #0A0A0A;
+    box-shadow: 0 6px 22px -8px var(--glow);
+  }
+  .btn-primary:hover { background: #FFFFFF; box-shadow: 0 10px 30px -8px var(--glow); }
+  .btn-primary:disabled { opacity: 0.3; cursor: default; box-shadow: none; }
+  .btn-primary:disabled:hover { background: var(--green); }
+  .btn-ghost { background: transparent; color: var(--muted); padding: 13px 8px; }
+  .btn-ghost:hover { color: var(--ink); }
+  .btn-ghost:disabled { opacity: 0; pointer-events: none; }
+
+  /* interstitial / welcome / end */
+  .center {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: flex-start; justify-content: center;
+    padding: 0 clamp(32px, 7vw, 108px);
+  }
+  .center .kick {
+    font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase;
+    color: var(--green); margin-bottom: 22px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .center .kick::before { content:""; width: 30px; height:1px; background: var(--green); opacity:.6; }
+  .center h1 {
+    font-family: 'Newsreader', serif;
+    font-weight: 400;
+    font-size: clamp(34px, 5.4vw, 62px);
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    max-width: 760px;
+    margin: 0 0 22px;
+    word-wrap: break-word;
+  }
+  .center h1 em { font-style: italic; color: var(--sage); }
+  .center p {
+    font-size: 16.5px; color: var(--muted); max-width: 500px;
+    line-height: 1.62; margin: 0 0 36px;
+  }
+
+  .roman {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: clamp(46px, 8vw, 88px);
+    color: var(--green);
+    line-height: 1;
+    margin-bottom: 20px;
+    opacity: 0.9;
+  }
+
+  .seal {
+    width: 60px; height: 60px; border-radius: 50%;
+    border: 1px solid var(--green);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 26px;
+    box-shadow: 0 0 0 6px rgba(255,255,255,0.05), 0 0 26px var(--glow);
+  }
+  .seal svg { width: 24px; height: 24px; }
+
+  .signoff {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--sage);
+    margin-top: 4px;
+  }
+
+  @media (max-width: 860px) {
+    .stage { grid-template-columns: 1fr; }
+    .rail {
+      flex-direction: row;
+      align-items: center;
+      padding: 16px 22px;
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+      gap: 20px;
+    }
+    .mark, .mark-sub { margin: 0; }
+    .mark-sub { display: none; }
+    .ascent { display: flex; align-items: center; padding: 0; flex: 1; }
+    .ascent-track { position: relative; left: auto; top: auto; bottom: auto; width: 100%; height: 2px; }
+    .ascent-fill { top: 0; bottom: 0; height: auto; left: 0; width: 0%; transition: width 0.7s cubic-bezier(.65,0,.35,1); background: linear-gradient(90deg, var(--green-deep), var(--green)); }
+    .node { display: none; }
+    .canvas { padding: 20px 24px; align-items: flex-start; padding-top: 40px; }
+    .center { padding: 0 24px; }
+    .topbar { padding: 16px 24px 0; }
+    .nav { padding: 12px 24px 24px; }
+  }
+  @media (max-height: 600px) {
+    .canvas { align-items: flex-start; padding-top: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <!-- ascent rail -->
+  <aside class="rail">
+    <div>
+      <div class="mark">Edo Daves<span class="dot">.</span></div>
+      <div class="mark-sub">Private Intake</div>
+    </div>
+    <div class="ascent" id="ascent">
+      <div class="ascent-track"><div class="ascent-fill" id="ascentFill"></div></div>
+    </div>
+  </aside>
+
+  <!-- main -->
+  <main class="main" id="main">
+    <div class="topbar" id="topbar"></div>
+    <div id="body"></div>
+    <div class="nav" id="nav" style="display:none">
+      <button class="btn btn-ghost" id="backBtn">Back</button>
+      <button class="btn btn-primary" id="nextBtn">Continue</button>
+    </div>
+  </main>
+</div>
+
+<script>
+/* =========================================================
+   PASTE YOUR GOOGLE APPS SCRIPT URL BETWEEN THE QUOTES BELOW.
+   Until you do, the form runs in preview mode (nothing is sent).
+   ========================================================= */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyXxCzHosTqwZ5j8_hK6e0mMGx5Opr4Y_nEFenfK-qy1_ozQlDINecAgJyadZz-bPw4/exec";
+
+/* ---------- data ---------- */
+const sections = [
+  { roman: "I",   name: "Arrival",       tag: "The basics, quickly." },
+  { roman: "II",  name: "First Contact", tag: "How you found your way here." },
+  { roman: "III", name: "The Ceiling",   tag: "What was really in the way." },
+  { roman: "IV",  name: "The Turn",      tag: "The moment something changed." },
+  { roman: "V",   name: "The Decision",  tag: "Crossing the line." },
+  { roman: "VI",  name: "The Room",      tag: "You, on the inside." },
+];
+
+const questions = [
+  // I — Arrival
+  { s:0, key:"biz",    type:"choice", q:"What kind of business do you run?",
+    opts:["Coaching","Consulting","Course or education","Agency","Something else"] },
+  { s:0, key:"rev",    type:"choice", q:"Where are you right now, monthly?",
+    sub:"Ballpark is fine. This stays between us.",
+    opts:["Under $10K","$10K – $20K","$20K – $40K","$40K – $70K","$70K+"] },
+
+  // II — First Contact
+  { s:1, key:"found",  type:"choice", q:"Where did you first come across me?",
+    opts:["Instagram","YouTube","LinkedIn","X / Twitter","A podcast","A referral","Somewhere else"] },
+  { s:1, key:"stood",  type:"longtext", q:"The first thing of mine that made me <em>stand out</em> — a post, a video, a single line. What was it?",
+    sub:"Be specific if you can. The exact thing that caught you matters." },
+
+  // III — The Ceiling
+  { s:2, key:"block",  type:"longtext", q:"Before you found me, how would you have described what was <em>actually</em> holding you back?",
+    sub:"In your own words — the way you'd have said it to a friend at the time." },
+  { s:2, key:"tried",  type:"multichoice", q:"What had you already tried to break through that didn't work?",
+    sub:"Select all that apply.",
+    opts:["Better lead gen or paid ads","Funnel or offer rebuilds","A high-ticket pivot","Hiring — VA, setter, or team","Content systems","Another coaching programme","Mindset or inner work","Honestly, nothing had really worked"] },
+
+  // IV — The Turn
+  { s:3, key:"diff",   type:"longtext", q:"What made <em>this</em> feel different from everything on that list?" },
+  { s:3, key:"book",   type:"longtext", q:"What finally made you <em>book the call</em>, instead of watching from a distance?",
+    sub:"The trigger — the thing that tipped you from thinking about it to doing it." },
+  { s:3, key:"backout",type:"choice", q:"Between booking and showing up — did any part of you want to back out?",
+    opts:["No, I was ready","A little — I wondered if it was worth it","Yes — I almost cancelled","Yes — I did reschedule at least once"] },
+
+  // V — The Decision
+  { s:4, key:"cycle",  type:"choice", q:"How long did it take you to decide to work with me?",
+    opts:["Same day","Within a week","One to two weeks","Three to four weeks","One to two months","Longer than that"] },
+  { s:4, key:"doubt",  type:"choice", q:"Right before you paid, what was the <em>last</em> thing making you hesitate?",
+    opts:["Whether it would actually move my revenue","Whether it was different from inner work I'd tried","Whether it would work for my specific situation","Whether it was the right time","The price","Something in me — whether I'm built for this"] },
+  { s:4, key:"doubt2", type:"longtext", q:"Say more about that doubt — and what <em>dissolved</em> it." },
+  { s:4, key:"cross",  type:"longtext", q:"What finally got you across the line to <em>pay</em>?" },
+
+  // VI — The Room
+  { s:5, key:"double", type:"choice", q:"If the price had been <em>double</em>, would you still have said yes?",
+    opts:["Yes, without hesitation","Yes — but I'd have needed more proof first","Probably not","No"] },
+  { s:5, key:"needed", type:"longtext", q:"What would you have needed to <em>see</em> to make it a yes at that price?" },
+  { s:5, key:"convict",type:"scale", q:"Before you signed up, how convinced were you?",
+    sub:"1 means barely. 10 means certain.", ends:["Barely","Certain"] },
+  { s:5, key:"sooner", type:"choice", q:"What could I have done to get you to <em>yes</em> sooner?",
+    opts:["More proof from people in my exact situation","A clearer breakdown of how the mechanism works","More credibility signals","A conversation or call","Nothing — the timing was on me"] },
+  { s:5, key:"help",   type:"longtext", q:"Last one. What do you most want me to help you figure out — or talk about — <em>right now</em>?",
+    sub:"This shapes what I build next. Tell me what you actually need." },
+];
+
+/* ---------- build screen sequence ---------- */
+// -1 welcome, then per section: intro + its questions, then END
+const seq = [{ kind:"welcome" }];
+sections.forEach((sec, si) => {
+  seq.push({ kind:"intro", s:si });
+  questions.filter(q => q.s === si).forEach(q => seq.push({ kind:"q", q }));
+});
+seq.push({ kind:"end" });
+
+const TOTAL_Q = questions.length;
+let pos = 0;
+const answers = {};
+
+const bodyEl   = document.getElementById('body');
+const topbar   = document.getElementById('topbar');
+const nav      = document.getElementById('nav');
+const backBtn  = document.getElementById('backBtn');
+const nextBtn  = document.getElementById('nextBtn');
+const ascentEl = document.getElementById('ascent');
+const fillEl   = document.getElementById('ascentFill');
+
+/* build rail nodes */
+sections.forEach((sec, i) => {
+  const n = document.createElement('div');
+  n.className = 'node';
+  n.id = 'node-' + i;
+  n.innerHTML = `<span class="bead"></span><span class="lbl"><b>${sec.roman}</b>${sec.name}</span>`;
+  ascentEl.appendChild(n);
+});
+
+function currentSection() {
+  const item = seq[pos];
+  if (item.kind === 'welcome') return -1;
+  if (item.kind === 'end') return sections.length - 1;
+  return item.s !== undefined ? item.s : item.q.s;
+}
+function answeredCount() {
+  return questions.filter(q => answers[q.key] !== undefined && answers[q.key] !== '' &&
+    !(Array.isArray(answers[q.key]) && answers[q.key].length === 0)).length;
+}
+
+function updateRail() {
+  const sec = currentSection();
+  const isMobile = window.matchMedia('(max-width: 860px)').matches;
+  const pct = seq[pos].kind === 'end' ? 100 : (sec < 0 ? 0 : (answeredCount() / TOTAL_Q) * 100);
+  if (isMobile) { fillEl.style.width = pct + '%'; }
+  else { fillEl.style.height = pct + '%'; }
+  sections.forEach((s, i) => {
+    const node = document.getElementById('node-' + i);
+    node.classList.toggle('current', i === sec && seq[pos].kind !== 'end');
+    node.classList.toggle('done', i < sec || seq[pos].kind === 'end');
+  });
+}
+
+function val() {
+  const el = document.getElementById('input-active');
+  return el ? el.value.trim() : '';
+}
+
+function currentQ() { return seq[pos].kind === 'q' ? seq[pos].q : null; }
+
+function valid() {
+  const q = currentQ();
+  if (!q) return true;
+  const a = answers[q.key];
+  if (q.type === 'text' || q.type === 'email' || q.type === 'longtext') return q.optional ? true : val().length > 0;
+  if (q.type === 'multichoice') return Array.isArray(a) && a.length > 0;
+  return a !== undefined && a !== '';
+}
+
+function save() {
+  const q = currentQ();
+  if (q && (q.type === 'text' || q.type === 'email' || q.type === 'longtext')) answers[q.key] = val();
+}
+
+function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+/* ---------- render ---------- */
+function render() {
+  bodyEl.innerHTML = '';
+  const item = seq[pos];
+
+  if (item.kind === 'welcome') {
+    nav.style.display = 'none'; topbar.textContent = '';
+    const c = document.createElement('div');
+    c.className = 'center fade';
+    c.innerHTML = `
+      <div class="kick">By invitation</div>
+      <h1>Before we begin, I want the <em>real</em> story.</h1>
+      <p>Not the tidy version. The doubts, the trigger, the moment it clicked. What you write here is where our work actually starts — so take a few minutes and be honest.</p>
+      <button class="btn btn-primary" id="go">Begin &nbsp;&rarr;</button>
+    `;
+    bodyEl.appendChild(c);
+    document.getElementById('go').addEventListener('click', () => step(1));
+    updateRail(); return;
+  }
+
+  if (item.kind === 'intro') {
+    nav.style.display = 'none'; topbar.textContent = '';
+    const sec = sections[item.s];
+    const c = document.createElement('div');
+    c.className = 'center fade';
+    c.innerHTML = `
+      <div class="roman">${sec.roman}</div>
+      <h1>${sec.name}</h1>
+      <p>${sec.tag}</p>
+      <button class="btn btn-primary" id="enter">Enter &nbsp;&rarr;</button>
+    `;
+    bodyEl.appendChild(c);
+    document.getElementById('enter').addEventListener('click', () => step(1));
+    updateRail(); return;
+  }
+
+  if (item.kind === 'end') {
+    nav.style.display = 'none'; topbar.textContent = '';
+    renderEnd();
+    updateRail(); return;
+  }
+
+  // question
+  const q = item.q;
+  nav.style.display = 'flex';
+  topbar.textContent = String(seqQIndex()).padStart(2,'0') + ' / ' + String(TOTAL_Q).padStart(2,'0');
+
+  const wrap = document.createElement('div');
+  wrap.className = 'canvas';
+  const sc = document.createElement('div');
+  sc.className = 'screen fade';
+
+  const sec = sections[q.s];
+  let html = `<div class="eyebrow"><span class="n">${sec.roman}</span> ${sec.name}</div>
+              <h2 class="q">${q.q}</h2>`;
+  if (q.sub) html += `<p class="subq">${q.sub}</p>`;
+
+  if (q.type === 'text' || q.type === 'email') {
+    html += `<input id="input-active" type="${q.type}" placeholder="Type your answer" value="${answers[q.key] ? esc(answers[q.key]) : ''}" />`;
+    html += hintRow(false, q.optional);
+  } else if (q.type === 'longtext') {
+    html += `<textarea id="input-active" placeholder="Take your time…" rows="2">${answers[q.key] ? esc(answers[q.key]) : ''}</textarea>`;
+    html += hintRow(true, q.optional);
+  } else if (q.type === 'choice') {
+    html += `<div class="options" id="opts">`;
+    q.opts.forEach((o, i) => {
+      const selCls = answers[q.key] === o ? ' sel' : '';
+      html += `<div class="opt${selCls}" data-v="${esc(o)}"><span class="key">${String.fromCharCode(65+i)}</span><span class="txt">${o}</span></div>`;
+    });
+    html += `</div>`;
+  } else if (q.type === 'multichoice') {
+    const cur = Array.isArray(answers[q.key]) ? answers[q.key] : [];
+    html += `<div class="options" id="opts">`;
+    q.opts.forEach((o, i) => {
+      const selCls = cur.includes(o) ? ' sel' : '';
+      html += `<div class="opt${selCls}" data-v="${esc(o)}"><span class="key">${String.fromCharCode(65+i)}</span><span class="txt">${o}</span></div>`;
+    });
+    html += `</div>`;
+  } else if (q.type === 'scale') {
+    html += `<div class="scale" id="opts">`;
+    for (let i=1;i<=10;i++){
+      const selCls = answers[q.key] === i ? ' sel' : '';
+      html += `<div class="s${selCls}" data-v="${i}">${i}</div>`;
+    }
+    html += `</div><div class="scale-ends"><span>${q.ends[0]}</span><span>${q.ends[1]}</span></div>`;
+  }
+
+  sc.innerHTML = html;
+  wrap.appendChild(sc);
+  bodyEl.appendChild(wrap);
+  bindInputs(q);
+  syncNav();
+  updateRail();
+}
+
+function hintRow(multiline, optional) {
+  const key = multiline ? 'Shift + Enter' : 'Enter';
+  const tail = multiline ? 'for a new line, Enter to continue' : 'to continue';
+  const skip = optional ? ' &nbsp;·&nbsp; optional, you can skip' : '';
+  return `<div class="hint" id="hint"><span class="kbd">${key}</span><span>${tail}${skip}</span></div>`;
+}
+
+function seqQIndex() {
+  let n = 0;
+  for (let i=0;i<=pos;i++) if (seq[i].kind === 'q') n++;
+  return n;
+}
+
+function bindInputs(q) {
+  const input = document.getElementById('input-active');
+  if (input) {
+    setTimeout(() => input.focus(), 60);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !(q.type === 'longtext' && e.shiftKey)) {
+        e.preventDefault(); attemptNext();
+      }
+    });
+    input.addEventListener('input', () => {
+      const h = document.getElementById('hint'); if (h) h.classList.remove('err');
+      syncNav();
+    });
+  }
+  const opts = document.getElementById('opts');
+  if (opts && q.type === 'choice') {
+    opts.querySelectorAll('.opt').forEach(el => el.addEventListener('click', () => {
+      opts.querySelectorAll('.opt').forEach(o => o.classList.remove('sel'));
+      el.classList.add('sel');
+      answers[q.key] = el.dataset.v;
+      syncNav();
+      setTimeout(() => step(1), 340);
+    }));
+  }
+  if (opts && q.type === 'multichoice') {
+    opts.querySelectorAll('.opt').forEach(el => el.addEventListener('click', () => {
+      el.classList.toggle('sel');
+      const chosen = [...opts.querySelectorAll('.opt.sel')].map(o => o.dataset.v);
+      answers[q.key] = chosen;
+      syncNav();
+    }));
+  }
+  if (opts && q.type === 'scale') {
+    opts.querySelectorAll('.s').forEach(el => el.addEventListener('click', () => {
+      opts.querySelectorAll('.s').forEach(o => o.classList.remove('sel'));
+      el.classList.add('sel');
+      answers[q.key] = parseInt(el.dataset.v, 10);
+      syncNav();
+      setTimeout(() => step(1), 340);
+    }));
+  }
+}
+
+function syncNav() {
+  backBtn.disabled = pos === 0;
+  nextBtn.disabled = !valid();
+  const isLastQ = seqQIndex() === TOTAL_Q && seq[pos].kind === 'q';
+  nextBtn.textContent = isLastQ ? 'Complete' : 'Continue';
+}
+
+function attemptNext() {
+  if (!valid()) {
+    const h = document.getElementById('hint');
+    if (h) { h.classList.add('err'); h.innerHTML = '<span>This one needs an answer before you continue.</span>'; }
+    return;
+  }
+  save(); step(1);
+}
+
+function step(d) {
+  save();
+  pos += d;
+  if (pos < 0) pos = 0;
+  if (pos > seq.length - 1) pos = seq.length - 1;
+  render();
+}
+
+nextBtn.addEventListener('click', attemptNext);
+backBtn.addEventListener('click', () => step(-1));
+window.addEventListener('resize', updateRail);
+
+/* ---------- submit to Google Sheet ---------- */
+let posted = false;
+
+function buildRecord() {
+  const record = { submitted_at: new Date().toISOString() };
+  questions.forEach(q => { record[q.key] = answers[q.key] !== undefined ? answers[q.key] : ''; });
+  return record;
+}
+
+async function submitToSheet() {
+  if (!SCRIPT_URL || SCRIPT_URL.indexOf('PASTE_YOUR') === 0) {
+    return { preview: true };            // no endpoint set yet
+  }
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(buildRecord()),
+      redirect: 'follow',
+      signal: ctrl.signal
+    });
+    let j = null;
+    try { j = await res.json(); } catch (e) {}
+    if (!res.ok || (j && j.ok === false)) {
+      throw new Error((j && j.error) || ('HTTP ' + res.status));
+    }
+    return { ok: true };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+function renderEnd() {
+  const paint = (inner) => {
+    bodyEl.innerHTML = '';
+    const c = document.createElement('div');
+    c.className = 'center fade';
+    c.innerHTML = inner;
+    bodyEl.appendChild(c);
+    return c;
+  };
+
+  const doneHtml = `
+    <div class="seal">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    </div>
+    <div class="kick">You're in</div>
+    <h1>You're in.</h1>
+    <p>Everything you just told me shapes what we do next. I'll have read every word before we speak — nothing here gets wasted.</p>
+    <div class="signoff">— Edo</div>`;
+
+  const sendingHtml = `
+    <div class="kick">Almost there</div>
+    <h1>Sending your answers…</h1>
+    <p>One moment — saving everything you just wrote.</p>`;
+
+  const errHtml = `
+    <div class="kick" style="color:#E0917F">Didn't go through</div>
+    <h1>That didn't send.</h1>
+    <p>Your answers are still here — nothing's lost. Give it another try.</p>
+    <button class="btn btn-primary" id="retry">Try again</button>`;
+
+  if (posted) { paint(doneHtml); return; }
+
+  paint(sendingHtml);
+  submitToSheet()
+    .then((r) => { posted = true; paint(doneHtml); })
+    .catch((err) => {
+      console.error('submit failed', err);
+      paint(errHtml);
+      const rb = document.getElementById('retry');
+      if (rb) rb.addEventListener('click', renderEnd);
+    });
+}
+
+render();
+</script>
+</body>
+</html>
